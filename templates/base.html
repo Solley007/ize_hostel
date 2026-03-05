@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ize Hostel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background:#f4f6fb; }
+    .sidebar { min-height:100vh; background:#1a2340; padding-top:1rem; }
+    .sidebar a { color:#b0bec5; text-decoration:none; display:block; padding:.6rem 1.2rem; border-radius:.4rem; margin:.1rem .5rem; }
+    .sidebar a:hover, .sidebar a.active { background:#2e3f6e; color:#fff; }
+    .sidebar-logo { display:block; padding:.8rem 1rem 1rem; text-align:center; }
+    .sidebar-logo img { width:100%; max-width:160px; background:#fff; border-radius:.5rem; padding:6px; }
+    .badge-available { background:#198754; }
+    .badge-occupied  { background:#dc3545; }
+  </style>
+</head>
+<body>
+<div class="d-flex">
+  {% if current_user.is_authenticated %}
+  <div class="sidebar col-2">
+    <div class="sidebar-logo">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="Ize Hostel Logo">
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint=='dashboard' }}">
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a href="{{ url_for('rooms') }}" class="{{ 'active' if request.endpoint=='rooms' }}">
+      <i class="bi bi-door-open"></i> Rooms
+    </a>
+    <a href="{{ url_for('students') }}" class="{{ 'active' if request.endpoint=='students' }}">
+      <i class="bi bi-people"></i> Students
+    </a>
+    {% if current_user.role == 'admin' %}
+    <a href="{{ url_for('users') }}" class="{{ 'active' if request.endpoint=='users' }}">
+      <i class="bi bi-shield-lock"></i> Users
+    </a>
+    {% endif %}
+    <a href="{{ url_for('logout') }}" class="mt-4">
+      <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+  </div>
+  {% endif %}
+  <div class="flex-grow-1 p-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">{{ msg }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Rooms</h4>
+  {% if current_user.role == "admin" %}
+  <a href="{{ url_for('add_room') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus"></i> Add Room
+  </a>
+  {% endif %}
+</div>
+<table class="table table-hover table-sm">
+  <thead class="table-dark">
+    <tr>
+      <th>Room</th><th>Block</th><th>Type</th><th>Capacity</th>
+      <th>Occupied</th><th>Available</th><th>Beds</th>
+      {% if current_user.role == "admin" %}<th>Action</th>{% endif %}
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rooms %}
+  <tr>
+    <td>{{ r.room_number }}</td>
+    <td>
+      {{ r.block }}
+      {% if r.block == 'B' %}
+        <span class="badge" style="background-color:#e83e8c; font-size:.7rem;">Girls</span>
+      {% endif %}
+    </td>
+    <td>{{ room_type_labels[r.room_type] }}</td>
+    <td>{{ r.capacity }}</td>
+    <td>{{ r.occupied_beds }}</td>
+    <td>
+      <span class="badge {{ 'bg-success' if r.available_beds > 0 else 'bg-danger' }}">
+        {{ r.available_beds }}
+      </span>
+    </td>
+    <td>
+      {% for b in r.beds %}
+        <span class="badge {{ 'bg-danger' if b.is_occupied else 'bg-success' }}">
+          {{ b.bed_label }}
+        </span>
+      {% endfor %}
+    </td>
+    {% if current_user.role == "admin" %}
+    <td>
+      <form method="POST" action="{{ url_for('delete_room', room_id=r.id) }}"
+            onsubmit="return confirm('Delete room?')">
+        <button class="btn btn-danger btn-sm">Delete</button>
+      </form>
+    </td>
+    {% endif %}
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

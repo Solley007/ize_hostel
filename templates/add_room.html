@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>Add Room</h4>
+<div class="card col-md-5">
+  <div class="card-body">
+    <form method="POST">
+      <div class="mb-3">
+        <label class="form-label">Block</label>
+        <select name="block" class="form-select" required>
+          <option>A</option><option>B</option><option>C</option><option>D</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Room Number (e.g. A03)</label>
+        <input type="text" name="room_number" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Room Type</label>
+        <select name="room_type" class="form-select" required>
+          <option value="room_1">Room of 1</option>
+          <option value="room_2">Room of 2</option>
+          <option value="room_2_exclusive">Room of 2 Exclusive</option>
+          <option value="room_3">Room of 3</option>
+        </select>
+      </div>
+      <button class="btn btn-primary">Add Room</button>
+      <a href="{{ url_for('rooms') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

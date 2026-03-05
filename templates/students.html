@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Students</h4>
+  <a href="{{ url_for('add_student') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-person-plus"></i> Admit Student
+  </a>
+</div>
+<input type="text" id="search" class="form-control mb-3" placeholder="Search by name or matric...">
+<table class="table table-hover table-sm" id="studentTable">
+  <thead class="table-dark">
+    <tr>
+      <th>Name</th><th>Matric</th><th>Uni</th><th>Bed</th><th>Room Type</th>
+      <th>Meal Plan</th><th>Payment</th><th>Period Paid</th><th>Amount (₦)</th>
+      <th>Status</th><th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for s in students %}
+  <tr>
+    <td><a href="{{ url_for('student_detail', student_id=s.id) }}">{{ s.full_name }}</a></td>
+    <td>{{ s.matric_number }}</td>
+    <td>
+      <span class="badge {{ 'bg-info' if s.university=='Nile' else 'bg-warning text-dark' }}">
+        {{ s.university }}
+      </span>
+    </td>
+    <td>{{ s.bed.bed_label if s.bed else "-" }}</td>
+    <td>{{ room_type_labels[s.bed.room.room_type] if s.bed else "-" }}</td>
+    <td>{{ "✅" if s.meal_plan else "❌" }}</td>
+    <td>{{ s.payment_type }}</td>
+    <td>{{ s.semester_paid }}</td>
+    <td>{{ "{:,.0f}".format(s.amount_paid) }}</td>
+    <td>
+      <span class="badge {{ 'bg-success' if s.is_active else 'bg-secondary' }}">
+        {{ "Active" if s.is_active else "Checked Out" }}
+      </span>
+    </td>
+    <td>
+      {% if s.is_active %}
+      <form method="POST" action="{{ url_for('checkout_student', student_id=s.id) }}"
+            onsubmit="return confirm('Check out this student?')">
+        <button class="btn btn-warning btn-sm">Check Out</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById("search").addEventListener("keyup", function () {
+  let val = this.value.toLowerCase();
+  document.querySelectorAll("#studentTable tbody tr").forEach(row => {
+    row.style.display = row.innerText.toLowerCase().includes(val) ? "" : "none";
+  });
+});
+</script>
+{% endblock %}

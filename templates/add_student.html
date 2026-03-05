@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>Admit Student</h4>
+<div class="card col-md-7">
+  <div class="card-body">
+    <form method="POST" id="admitForm">
+      <div class="row g-3">
+
+        <div class="col-md-6">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="full_name" class="form-control" required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Matric Number</label>
+          <input type="text" name="matric_number" class="form-control" required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">University</label>
+          <select name="university" id="university" class="form-select" required onchange="updateSemester()">
+            <option value="Nile">Nile University</option>
+            <option value="Baze">Baze University</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Phone</label>
+          <input type="text" name="phone" class="form-control">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-control">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Assign Bed</label>
+          <select name="bed_id" id="bed_id" class="form-select" required onchange="updatePrice()">
+            <option value="">-- Select Bed --</option>
+            {% for b in beds %}
+            <option value="{{ b.id }}" data-type="{{ b.room.room_type }}">
+              {{ b.bed_label }} — {{ room_type_labels[b.room.room_type] }}, Block {{ b.room.block }}{% if b.room.block == 'B' %} (Girls){% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Payment Type</label>
+          <select name="payment_type" id="payment_type" class="form-select" required onchange="updatePrice()">
+            <option value="Semester">Semester</option>
+            <option value="Session">Session (Full Year)</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Semester / Period Paid</label>
+          <input type="text" name="semester_paid" id="semester_paid" class="form-control"
+            placeholder="e.g. 1st Semester 2025/2026" required>
+          <small id="semInfo" class="text-muted"></small>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            Meal Plan
+            <small class="text-muted">(+₦{{ "{:,.0f}".format(meal_plan_price) }})</small>
+          </label>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox"
+                   name="meal_plan" id="meal_plan" onchange="updatePrice()">
+            <label class="form-check-label" for="meal_plan">Include Meal Plan</label>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Calculated Amount (₦)</label>
+          <input type="text" id="calcAmount" class="form-control bg-light fw-bold"
+                 readonly value="Select bed & payment type">
+        </div>
+
+      </div>
+
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-person-check"></i> Admit Student
+        </button>
+        <a href="{{ url_for('students') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const prices = {{ prices | tojson }};
+const MEAL_PLAN_PRICE = {{ meal_plan_price }};
+
+function getSelectedType() {
+  let sel = document.getElementById("bed_id");
+  return sel.options[sel.selectedIndex]?.dataset.type || "";
+}
+
+function updatePrice() {
+  let univ  = document.getElementById("university").value;
+  let ptype = document.getElementById("payment_type").value;
+  let rtype = getSelectedType();
+
+  if (!rtype) {
+    document.getElementById("calcAmount").value = "Select a bed first";
+    return;
+  }
+
+  let full   = prices[univ]?.[rtype] || 0;
+  let amount = ptype === "Semester" ? full / (univ === "Nile" ? 2 : 3) : full;
+
+  if (document.getElementById("meal_plan").checked) {
+    amount += MEAL_PLAN_PRICE;
+  }
+
+  document.getElementById("calcAmount").value =
+    "₦" + amount.toLocaleString("en-NG", { minimumFractionDigits: 0 });
+}
+
+function updateSemester() {
+  let univ = document.getElementById("university").value;
+  document.getElementById("semInfo").innerText =
+    univ === "Nile"
+      ? "Nile: Double Semester (2 per session)"
+      : "Baze: Tri Semester (3 per session)";
+  updatePrice();
+}
+
+updateSemester();
+</script>
+{% endblock %}

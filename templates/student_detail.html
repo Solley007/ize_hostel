@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>Student Profile</h4>
+<div class="card col-md-6">
+  <div class="card-body">
+    <h5>{{ student.full_name }}</h5>
+    <table class="table table-sm">
+      <tr><th>Matric</th><td>{{ student.matric_number }}</td></tr>
+      <tr><th>University</th><td>{{ student.university }}</td></tr>
+      <tr><th>Semester Schedule</th><td>{{ semester_schedule[student.university] }}</td></tr>
+      <tr><th>Phone</th><td>{{ student.phone or "-" }}</td></tr>
+      <tr><th>Email</th><td>{{ student.email or "-" }}</td></tr>
+      <tr><th>Bed</th><td>{{ student.bed.bed_label if student.bed else "N/A" }}</td></tr>
+      <tr>
+        <th>Room</th>
+        <td>
+          {{ student.bed.room.room_number if student.bed else "-" }} —
+          {{ room_type_labels[student.bed.room.room_type] if student.bed else "-" }}
+        </td>
+      </tr>
+      <tr><th>Block</th><td>{{ student.bed.room.block if student.bed else "-" }}</td></tr>
+      <tr><th>Meal Plan</th><td>{{ "Yes ✅" if student.meal_plan else "No ❌" }}</td></tr>
+      <tr><th>Payment Type</th><td>{{ student.payment_type }}</td></tr>
+      <tr><th>Period Paid</th><td>{{ student.semester_paid }}</td></tr>
+      <tr><th>Amount Paid (₦)</th><td><strong>{{ "{:,.0f}".format(student.amount_paid) }}</strong></td></tr>
+      <tr><th>Check-in Date</th><td>{{ student.check_in_date.strftime("%d %b %Y") }}</td></tr>
+      <tr>
+        <th>Status</th>
+        <td>
+          <span class="badge {{ 'bg-success' if student.is_active else 'bg-secondary' }}">
+            {{ "Active" if student.is_active else "Checked Out" }}
+          </span>
+        </td>
+      </tr>
+    </table>
+    <a href="{{ url_for('students') }}" class="btn btn-secondary btn-sm">← Back</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block content %}
+<h4 class="mb-3">Dashboard <small class="text-muted fs-6">Real-time Overview</small></h4>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card text-white bg-primary">
+      <div class="card-body"><h6>Total Beds</h6><h2>{{ total_beds }}</h2></div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-white bg-danger">
+      <div class="card-body"><h6>Occupied</h6><h2>{{ occupied }}</h2></div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-white bg-success">
+      <div class="card-body"><h6>Available</h6><h2>{{ available }}</h2></div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-white bg-secondary">
+      <div class="card-body"><h6>Total Rooms</h6><h2>{{ rooms|length }}</h2></div>
+    </div>
+  </div>
+</div>
+
+{% for block, block_rooms in blocks.items()|sort %}
+<h5 class="mt-3">
+  Block {{ block }}
+  {% if block == 'B' %}
+    <span class="badge bg-pink text-white" style="background-color:#e83e8c !important; font-size:.75rem;">
+      Girls Only
+    </span>
+  {% endif %}
+</h5>
+<div class="row g-2 mb-3">
+  {% for r in block_rooms %}
+  <div class="col-md-2">
+    <div class="card border-{{ 'danger' if r.available_beds == 0 else 'success' }}">
+      <div class="card-body p-2 text-center">
+        <strong>{{ r.room_number }}</strong><br>
+        <small class="text-muted">{{ room_type_labels[r.room_type] }}</small><br>
+        {% for b in r.beds %}
+          {% if b.is_occupied and b.student %}
+            <span class="badge badge-occupied"
+                  style="cursor:pointer;"
+                  data-bs-toggle="modal"
+                  data-bs-target="#bedModal"
+                  data-name="{{ b.student.full_name }}"
+                  data-matric="{{ b.student.matric_number }}"
+                  data-uni="{{ b.student.university }}"
+                  data-bed="{{ b.bed_label }}"
+                  data-room="{{ r.room_number }}"
+                  data-type="{{ room_type_labels[r.room_type] }}"
+                  data-meal="{{ 'Yes ✅' if b.student.meal_plan else 'No ❌' }}"
+                  data-payment="{{ b.student.payment_type }}"
+                  data-period="{{ b.student.semester_paid }}"
+                  data-amount="₦{{ '{:,.0f}'.format(b.student.amount_paid) }}"
+                  data-checkin="{{ b.student.check_in_date.strftime('%d %b %Y') }}"
+                  data-id="{{ b.student.id }}"
+                  title="Click to view {{ b.student.full_name }}">
+              {{ b.bed_label }}
+            </span>
+          {% else %}
+            <span class="badge badge-available">{{ b.bed_label }}</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+<h5 class="mt-4">Active Residents</h5>
+<table class="table table-striped table-sm">
+  <thead>
+    <tr>
+      <th>Name</th><th>Matric</th><th>Uni</th><th>Bed</th><th>Room Type</th>
+      <th>Meal Plan</th><th>Payment</th><th>Semester/Period</th><th>Amount (₦)</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for s in students %}
+  <tr>
+    <td><a href="{{ url_for('student_detail', student_id=s.id) }}">{{ s.full_name }}</a></td>
+    <td>{{ s.matric_number }}</td>
+    <td>{{ s.university }}</td>
+    <td>{{ s.bed.bed_label if s.bed else "-" }}</td>
+    <td>{{ room_type_labels[s.bed.room.room_type] if s.bed else "-" }}</td>
+    <td>{{ "Yes" if s.meal_plan else "No" }}</td>
+    <td>{{ s.payment_type }}</td>
+    <td>{{ s.semester_paid }}</td>
+    <td>{{ "{:,.0f}".format(s.amount_paid) }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<!-- Bed Detail Modal -->
+<div class="modal fade" id="bedModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title"><i class="bi bi-person-fill"></i> Resident Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-sm">
+          <tr><th>Full Name</th><td id="m-name"></td></tr>
+          <tr><th>Matric Number</th><td id="m-matric"></td></tr>
+          <tr><th>University</th><td id="m-uni"></td></tr>
+          <tr><th>Bed</th><td id="m-bed"></td></tr>
+          <tr><th>Room</th><td id="m-room"></td></tr>
+          <tr><th>Room Type</th><td id="m-type"></td></tr>
+          <tr><th>Meal Plan</th><td id="m-meal"></td></tr>
+          <tr><th>Payment Type</th><td id="m-payment"></td></tr>
+          <tr><th>Period Paid</th><td id="m-period"></td></tr>
+          <tr><th>Amount Paid</th><td id="m-amount"></td></tr>
+          <tr><th>Check-in Date</th><td id="m-checkin"></td></tr>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <a id="m-profile-link" href="#" class="btn btn-primary btn-sm">
+          <i class="bi bi-person"></i> Full Profile
+        </a>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById("bedModal").addEventListener("show.bs.modal", function (e) {
+  let btn = e.relatedTarget;
+  document.getElementById("m-name").innerText    = btn.dataset.name;
+  document.getElementById("m-matric").innerText  = btn.dataset.matric;
+  document.getElementById("m-uni").innerText     = btn.dataset.uni;
+  document.getElementById("m-bed").innerText     = btn.dataset.bed;
+  document.getElementById("m-room").innerText    = btn.dataset.room;
+  document.getElementById("m-type").innerText    = btn.dataset.type;
+  document.getElementById("m-meal").innerText    = btn.dataset.meal;
+  document.getElementById("m-payment").innerText = btn.dataset.payment;
+  document.getElementById("m-period").innerText  = btn.dataset.period;
+  document.getElementById("m-amount").innerText  = btn.dataset.amount;
+  document.getElementById("m-checkin").innerText = btn.dataset.checkin;
+  document.getElementById("m-profile-link").href = "/students/" + btn.dataset.id;
+});
+
+setInterval(() => {
+  fetch("/api/availability").then(r => r.json());
+}, 30000);
+</script>
+{% endblock %}
