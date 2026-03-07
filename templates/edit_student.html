@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>Edit Student — {{ student.full_name }}</h4>
+<div class="card col-md-7">
+  <div class="card-body">
+    <form method="POST" id="editForm">
+      <div class="row g-3">
+
+        <div class="col-md-6">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="full_name" class="form-control"
+                 value="{{ student.full_name }}" required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Matric Number</label>
+          <input type="text" name="matric_number" class="form-control"
+                 value="{{ student.matric_number }}" required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">University</label>
+          <select name="university" id="university" class="form-select" required onchange="updateSemester()">
+            <option value="Nile" {{ 'selected' if student.university == 'Nile' }}>Nile University</option>
+            <option value="Baze" {{ 'selected' if student.university == 'Baze' }}>Baze University</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Phone</label>
+          <input type="text" name="phone" class="form-control"
+                 value="{{ student.phone or '' }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-control"
+                 value="{{ student.email or '' }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Assigned Bed</label>
+          <select name="bed_id" id="bed_id" class="form-select" required onchange="updatePrice()">
+            {% for b in beds %}
+            <option value="{{ b.id }}" data-type="{{ b.room.room_type }}"
+              {{ 'selected' if b.id == student.bed_id }}
+              {{ 'disabled' if b.is_occupied and b.id != student.bed_id }}>
+              {{ b.bed_label }} — {{ room_type_labels[b.room.room_type] }}, Block {{ b.room.block }}
+              {{ '(Occupied)' if b.is_occupied and b.id != student.bed_id else '' }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Payment Type</label>
+          <select name="payment_type" id="payment_type" class="form-select" required onchange="updatePrice()">
+            <option value="Semester" {{ 'selected' if student.payment_type == 'Semester' }}>Semester</option>
+            <option value="Session"  {{ 'selected' if student.payment_type == 'Session' }}>Session (Full Year)</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Semester / Period Paid</label>
+          <input type="text" name="semester_paid" id="semester_paid" class="form-control"
+                 value="{{ student.semester_paid }}" required>
+          <small id="semInfo" class="text-muted"></small>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            Meal Plan
+            <small class="text-muted">(+₦{{ "{:,.0f}".format(meal_plan_price) }})</small>
+          </label>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="meal_plan" id="meal_plan"
+                   onchange="updatePrice()" {{ 'checked' if student.meal_plan }}>
+            <label class="form-check-label" for="meal_plan">Include Meal Plan</label>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Calculated Amount (₦)</label>
+          <input type="text" id="calcAmount" class="form-control bg-light fw-bold" readonly
+                 value="₦{{ '{:,.0f}'.format(student.amount_paid) }}">
+        </div>
+
+      </div>
+
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save"></i> Save Changes
+        </button>
+        <a href="{{ url_for('student_detail', student_id=student.id) }}" class="btn btn-secondary">Cancel</a>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const prices = {{ prices | tojson }};
+const MEAL_PLAN_PRICE = {{ meal_plan_price }};
+
+function getSelectedType() {
+  let sel = document.getElementById("bed_id");
+  return sel.options[sel.selectedIndex]?.dataset.type || "";
+}
+
+function updatePrice() {
+  let univ  = document.getElementById("university").value;
+  let ptype = document.getElementById("payment_type").value;
+  let rtype = getSelectedType();
+  if (!rtype) { return; }
+  let full   = prices[univ]?.[rtype] || 0;
+  let amount = ptype === "Semester" ? full / (univ === "Nile" ? 2 : 3) : full;
+  if (document.getElementById("meal_plan").checked) {
+    amount += MEAL_PLAN_PRICE;
+  }
+  document.getElementById("calcAmount").value =
+    "₦" + amount.toLocaleString("en-NG", { minimumFractionDigits: 0 });
+}
+
+function updateSemester() {
+  let univ = document.getElementById("university").value;
+  document.getElementById("semInfo").innerText =
+    univ === "Nile"
+      ? "Nile: Double Semester (2 per session)"
+      : "Baze: Tri Semester (3 per session)";
+  updatePrice();
+}
+
+updateSemester();
+</script>
+{% endblock %}

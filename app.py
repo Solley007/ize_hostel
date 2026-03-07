@@ -292,6 +292,49 @@ def student_detail(student_id):
     student = Student.query.get_or_404(student_id)
     return render_template("student_detail.html", student=student,
         room_type_labels=ROOM_TYPE_LABELS, semester_schedule=SEMESTER_SCHEDULE)
+        
+@app.route("/students/edit/<int:student_id>", methods=["GET", "POST"])
+@login_required
+def edit_student(student_id):
+    student = Student.query.get_or_404(student_id)
+    all_beds = Bed.query.join(Room).order_by(Room.block, Room.room_number).all()
+    if request.method == "POST":
+        # Free old bed if bed is changing
+        new_bed_id = int(request.form["bed_id"])
+        if student.bed_id != new_bed_id:
+            if student.bed:
+                student.bed.is_occupied = False
+            new_bed = Bed.query.get_or_404(new_bed_id)
+            new_bed.is_occupied = True
+            student.bed_id = new_bed_id
+
+        univ  = request.form["university"]
+        ptype = request.form["payment_type"]
+        has_meal = "meal_plan" in request.form
+        price = get_price(univ, student.bed.room.room_type, ptype, meal_plan=has_meal)
+
+        student.full_name     = request.form["full_name"]
+        student.matric_number = request.form["matric_number"]
+        student.university    = univ
+        student.phone         = request.form.get("phone")
+        student.email         = request.form.get("email")
+        student.meal_plan     = has_meal
+        student.payment_type  = ptype
+        student.semester_paid = request.form["semester_paid"]
+        student.amount_paid   = price
+
+        try:
+            db.session.commit()
+            flash(f"{student.full_name} updated successfully.", "success")
+            return redirect(url_for("student_detail", student_id=student.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error updating student: {str(e)}", "danger")
+
+    return render_template("edit_student.html", student=student,
+        beds=all_beds, prices=PRICES, meal_plan_price=MEAL_PLAN_PRICE,
+        semester_schedule=SEMESTER_SCHEDULE, room_type_labels=ROOM_TYPE_LABELS)
+
 
 
 # ── Users (admin only) ────────────────────────────────────────────────────────

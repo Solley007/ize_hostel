@@ -34,6 +34,9 @@
       </tr>
     </table>
     <a href="{{ url_for('students') }}" class="btn btn-secondary btn-sm">← Back</a>
+    <a href="{{ url_for('edit_student', student_id=student.id) }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-pencil"></i> Edit</a>
+    <a href="{{ url_for('students') }}" class="btn btn-secondary btn-sm">← Back</a>
   </div>
 </div>
 {% endblock %}
