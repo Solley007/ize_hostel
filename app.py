@@ -286,13 +286,13 @@ def checkout_student(student_id):
     return redirect(url_for("students"))
 
 
-@app.route("/students/<int:student_id>")
+@app.route("/students")
 @login_required
-def student_detail(student_id):
-    student = Student.query.get_or_404(student_id)
-    return render_template("student_detail.html", student=student,
-        room_type_labels=ROOM_TYPE_LABELS, semester_schedule=SEMESTER_SCHEDULE)
-        
+def students():
+    all_students = Student.query.filter_by(is_active=True).order_by(Student.full_name).all()
+    return render_template("students.html", students=all_students,
+        room_type_labels=ROOM_TYPE_LABELS)
+
 @app.route("/students/edit/<int:student_id>", methods=["GET", "POST"])
 @login_required
 def edit_student(student_id):

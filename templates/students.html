@@ -1,53 +1,164 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h4>Students</h4>
-  <a href="{{ url_for('add_student') }}" class="btn btn-primary btn-sm">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-0">Students</h4>
+    <small class="text-muted">Active residents only</small>
+  </div>
+  <a href="{{ url_for('add_student') }}" class="btn btn-primary">
     <i class="bi bi-person-plus"></i> Admit Student
   </a>
 </div>
-<input type="text" id="search" class="form-control mb-3" placeholder="Search by name or matric...">
-<table class="table table-hover table-sm" id="studentTable">
-  <thead class="table-dark">
-    <tr>
-      <th>Name</th><th>Matric</th><th>Uni</th><th>Bed</th><th>Room Type</th>
-      <th>Meal Plan</th><th>Payment</th><th>Period Paid</th><th>Amount (₦)</th>
-      <th>Status</th><th>Action</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for s in students %}
-  <tr>
-    <td><a href="{{ url_for('student_detail', student_id=s.id) }}">{{ s.full_name }}</a></td>
-    <td>{{ s.matric_number }}</td>
-    <td>
-      <span class="badge {{ 'bg-info' if s.university=='Nile' else 'bg-warning text-dark' }}">
-        {{ s.university }}
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+          <i class="bi bi-people-fill text-primary fs-4"></i>
+        </div>
+        <div>
+          <div class="text-muted small">Total Active</div>
+          <div class="fw-bold fs-4">{{ students|selectattr('is_active')|list|length }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-info bg-opacity-10 p-3">
+          <i class="bi bi-mortarboard-fill text-info fs-4"></i>
+        </div>
+        <div>
+          <div class="text-muted small">Nile Students</div>
+          <div class="fw-bold fs-4">{{ students|selectattr('university', 'equalto', 'Nile')|list|length }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+          <i class="bi bi-mortarboard-fill text-warning fs-4"></i>
+        </div>
+        <div>
+          <div class="text-muted small">Baze Students</div>
+          <div class="fw-bold fs-4">{{ students|selectattr('university', 'equalto', 'Baze')|list|length }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <div class="input-group">
+      <span class="input-group-text bg-white border-end-0">
+        <i class="bi bi-search text-muted"></i>
       </span>
-    </td>
-    <td>{{ s.bed.bed_label if s.bed else "-" }}</td>
-    <td>{{ room_type_labels[s.bed.room.room_type] if s.bed else "-" }}</td>
-    <td>{{ "✅" if s.meal_plan else "❌" }}</td>
-    <td>{{ s.payment_type }}</td>
-    <td>{{ s.semester_paid }}</td>
-    <td>{{ "{:,.0f}".format(s.amount_paid) }}</td>
-    <td>
-      <span class="badge {{ 'bg-success' if s.is_active else 'bg-secondary' }}">
-        {{ "Active" if s.is_active else "Checked Out" }}
-      </span>
-    </td>
-    <td>
-      {% if s.is_active %}
-      <form method="POST" action="{{ url_for('checkout_student', student_id=s.id) }}"
-            onsubmit="return confirm('Check out this student?')">
-        <button class="btn btn-warning btn-sm">Check Out</button>
-      </form>
-      {% endif %}
-    </td>
-  </tr>
-  {% endfor %}
-  </tbody>
-</table>
+      <input type="text" id="search" class="form-control border-start-0"
+             placeholder="Search by name, matric number, room or university...">
+    </div>
+  </div>
+</div>
+
+<!-- Students Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" id="studentTable">
+        <thead class="bg-dark text-white">
+          <tr>
+            <th class="ps-4">Student</th>
+            <th>University</th>
+            <th>Bed / Room</th>
+            <th>Meal Plan</th>
+            <th>Payment</th>
+            <th>Period Paid</th>
+            <th>Amount (₦)</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for s in students if s.is_active %}
+        <tr>
+          <td class="ps-4">
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center
+                          justify-content-center" style="width:38px;height:38px;min-width:38px;">
+                <span class="text-primary fw-bold">{{ s.full_name[0].upper() }}</span>
+              </div>
+              <div>
+                <div class="fw-semibold">{{ s.full_name }}</div>
+                <div class="text-muted small">{{ s.matric_number }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="badge rounded-pill {{ 'bg-info' if s.university=='Nile' else 'bg-warning text-dark' }}">
+              {{ s.university }}
+            </span>
+          </td>
+          <td>
+            {% if s.bed %}
+            <div class="fw-semibold">{{ s.bed.bed_label }}</div>
+            <div class="text-muted small">{{ room_type_labels[s.bed.room.room_type] }} · Block {{ s.bed.room.block }}</div>
+            {% else %}-{% endif %}
+          </td>
+          <td>
+            {% if s.meal_plan %}
+              <span class="badge bg-success rounded-pill">✓ Included</span>
+            {% else %}
+              <span class="badge bg-light text-muted rounded-pill">None</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge bg-secondary rounded-pill">{{ s.payment_type }}</span>
+          </td>
+          <td>
+            <div class="small">{{ s.semester_paid }}</div>
+          </td>
+          <td>
+            <div class="fw-semibold text-success">{{ "{:,.0f}".format(s.amount_paid) }}</div>
+          </td>
+          <td class="text-center">
+            <div class="d-flex gap-1 justify-content-center">
+              <a href="{{ url_for('student_detail', student_id=s.id) }}"
+                 class="btn btn-sm btn-outline-primary" title="View">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{{ url_for('edit_student', student_id=s.id) }}"
+                 class="btn btn-sm btn-outline-secondary" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form method="POST" action="{{ url_for('checkout_student', student_id=s.id) }}"
+                    onsubmit="return confirm('Check out {{ s.full_name }}?')">
+                <button class="btn btn-sm btn-outline-danger" title="Check Out">
+                  <i class="bi bi-box-arrow-right"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            No active students found
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 {% block scripts %}
 <script>
