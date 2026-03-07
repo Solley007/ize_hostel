@@ -285,6 +285,12 @@ def checkout_student(student_id):
     flash(f"{student.full_name} checked out.", "warning")
     return redirect(url_for("students"))
 
+@app.route("/students/<int:student_id>")
+@login_required
+def student_detail(student_id):
+    student = Student.query.get_or_404(student_id)
+    return render_template("student_detail.html", student=student,
+        room_type_labels=ROOM_TYPE_LABELS, semester_schedule=SEMESTER_SCHEDULE)
 
 
 
