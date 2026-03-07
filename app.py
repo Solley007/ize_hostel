@@ -230,7 +230,7 @@ def delete_room(room_id):
 @app.route("/students")
 @login_required
 def students():
-    all_students = Student.query.order_by(Student.full_name).all()
+    all_students = Student.query.filter_by(is_active=True).order_by(Student.full_name).all()
     return render_template("students.html", students=all_students,
         room_type_labels=ROOM_TYPE_LABELS)
 
@@ -286,12 +286,7 @@ def checkout_student(student_id):
     return redirect(url_for("students"))
 
 
-@app.route("/students")
-@login_required
-def students():
-    all_students = Student.query.filter_by(is_active=True).order_by(Student.full_name).all()
-    return render_template("students.html", students=all_students,
-        room_type_labels=ROOM_TYPE_LABELS)
+
 
 @app.route("/students/edit/<int:student_id>", methods=["GET", "POST"])
 @login_required
