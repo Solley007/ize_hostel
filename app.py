@@ -103,13 +103,10 @@ ROOM_TYPE_LABELS = {
     "room_3": "Room of 3",
 }
 
-
 def get_price(university, room_type, payment_type, meal_plan=False, is_exclusive=False):
-    # Use exclusive pricing key if applicable
     price_key = room_type
     if is_exclusive and room_type == "room_2":
         price_key = "room_2_exclusive"
-    
     full_price = PRICES.get(university, {}).get(price_key, 0)
     if payment_type == "Semester":
         divisor = 2 if university == "Nile" else 3
@@ -119,15 +116,7 @@ def get_price(university, room_type, payment_type, meal_plan=False, is_exclusive
     if meal_plan:
         amount += MEAL_PLAN_PRICE
     return amount
-    full_price = PRICES.get(university, {}).get(room_type, 0)
-    if payment_type == "Semester":
-        divisor = 2 if university == "Nile" else 3
-        amount = full_price / divisor
-    else:
-        amount = full_price
-    if meal_plan:
-        amount += MEAL_PLAN_PRICE
-    return amount
+
 
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
@@ -268,6 +257,7 @@ def add_student():
         has_meal = "meal_plan" in request.form
         price = get_price(univ, bed.room.room_type, ptype,
                   meal_plan=has_meal, is_exclusive=bed.room.is_exclusive)
+
         student = Student(
             full_name=request.form["full_name"],
             matric_number=request.form["matric_number"],
