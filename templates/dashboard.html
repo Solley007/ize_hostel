@@ -109,7 +109,12 @@
           {% elif r.available_beds == r.beds|length %}border-success bg-success bg-opacity-10
           {% else %}border-warning bg-warning bg-opacity-10{% endif %}">
           <div class="card-body p-2 text-center">
-            <div class="fw-bold small mb-1">{{ r.room_number }}</div>
+            <div class="fw-bold small mb-1">
+              {{ r.room_number }}
+              {% if r.is_exclusive %}
+                <span class="badge bg-warning text-dark" style="font-size:.55rem;">★ Excl.</span>
+              {% endif %}
+            </div>
             <div class="text-muted" style="font-size:.65rem;">{{ room_type_labels[r.room_type] }}</div>
             <div class="mt-1 d-flex flex-wrap gap-1 justify-content-center">
               {% for b in r.beds %}
@@ -124,6 +129,7 @@
                         data-bed="{{ b.bed_label }}"
                         data-room="{{ r.room_number }}"
                         data-type="{{ room_type_labels[r.room_type] }}"
+                        data-exclusive="{{ 'Yes ★' if r.is_exclusive else 'No' }}"
                         data-meal="{{ 'Yes ✅' if b.student.meal_plan else 'No ❌' }}"
                         data-payment="{{ b.student.payment_type }}"
                         data-period="{{ b.student.semester_paid }}"
@@ -172,6 +178,7 @@
             <th>Uni</th>
             <th>Bed</th>
             <th>Room Type</th>
+            <th>Exclusive</th>
             <th>Meal</th>
             <th>Payment</th>
             <th>Period</th>
@@ -197,6 +204,13 @@
             </td>
             <td>{{ s.bed.bed_label if s.bed else "—" }}</td>
             <td><small>{{ room_type_labels[s.bed.room.room_type] if s.bed else "—" }}</small></td>
+            <td>
+              {% if s.bed and s.bed.room.is_exclusive %}
+                <span class="badge bg-warning text-dark">★ Excl.</span>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
             <td>
               {% if s.meal_plan %}
                 <i class="bi bi-check-circle-fill text-success"></i>
@@ -240,11 +254,12 @@
             <tr class="table-light"><td class="text-muted ps-3">Bed</td><td id="m-bed"></td></tr>
             <tr><td class="text-muted ps-3">Room</td><td id="m-room"></td></tr>
             <tr class="table-light"><td class="text-muted ps-3">Room Type</td><td id="m-type"></td></tr>
-            <tr><td class="text-muted ps-3">Meal Plan</td><td id="m-meal"></td></tr>
-            <tr class="table-light"><td class="text-muted ps-3">Payment Type</td><td id="m-payment"></td></tr>
-            <tr><td class="text-muted ps-3">Period Paid</td><td id="m-period"></td></tr>
-            <tr class="table-light"><td class="text-muted ps-3">Amount Paid</td><td class="fw-bold text-success" id="m-amount"></td></tr>
-            <tr><td class="text-muted ps-3">Check-in Date</td><td id="m-checkin"></td></tr>
+            <tr><td class="text-muted ps-3">Exclusive Room</td><td id="m-exclusive"></td></tr>
+            <tr class="table-light"><td class="text-muted ps-3">Meal Plan</td><td id="m-meal"></td></tr>
+            <tr><td class="text-muted ps-3">Payment Type</td><td id="m-payment"></td></tr>
+            <tr class="table-light"><td class="text-muted ps-3">Period Paid</td><td id="m-period"></td></tr>
+            <tr><td class="text-muted ps-3">Amount Paid</td><td class="fw-bold text-success" id="m-amount"></td></tr>
+            <tr class="table-light"><td class="text-muted ps-3">Check-in Date</td><td id="m-checkin"></td></tr>
           </tbody>
         </table>
       </div>
@@ -264,26 +279,25 @@
 
 {% block scripts %}
 <script>
-// Bed modal population
 document.getElementById("bedModal").addEventListener("show.bs.modal", function (e) {
   let btn = e.relatedTarget;
-  document.getElementById("m-name-header").innerText = btn.dataset.name;
-  document.getElementById("m-room-header").innerText = "Room " + btn.dataset.room + " · " + btn.dataset.bed;
-  document.getElementById("m-name").innerText    = btn.dataset.name;
-  document.getElementById("m-matric").innerText  = btn.dataset.matric;
-  document.getElementById("m-uni").innerText     = btn.dataset.uni;
-  document.getElementById("m-bed").innerText     = btn.dataset.bed;
-  document.getElementById("m-room").innerText    = btn.dataset.room;
-  document.getElementById("m-type").innerText    = btn.dataset.type;
-  document.getElementById("m-meal").innerText    = btn.dataset.meal;
-  document.getElementById("m-payment").innerText = btn.dataset.payment;
-  document.getElementById("m-period").innerText  = btn.dataset.period;
-  document.getElementById("m-amount").innerText  = btn.dataset.amount;
-  document.getElementById("m-checkin").innerText = btn.dataset.checkin;
-  document.getElementById("m-profile-link").href = "/students/" + btn.dataset.id;
+  document.getElementById("m-name-header").innerText  = btn.dataset.name;
+  document.getElementById("m-room-header").innerText  = "Room " + btn.dataset.room + " · " + btn.dataset.bed;
+  document.getElementById("m-name").innerText         = btn.dataset.name;
+  document.getElementById("m-matric").innerText       = btn.dataset.matric;
+  document.getElementById("m-uni").innerText          = btn.dataset.uni;
+  document.getElementById("m-bed").innerText          = btn.dataset.bed;
+  document.getElementById("m-room").innerText         = btn.dataset.room;
+  document.getElementById("m-type").innerText         = btn.dataset.type;
+  document.getElementById("m-exclusive").innerText    = btn.dataset.exclusive;
+  document.getElementById("m-meal").innerText         = btn.dataset.meal;
+  document.getElementById("m-payment").innerText      = btn.dataset.payment;
+  document.getElementById("m-period").innerText       = btn.dataset.period;
+  document.getElementById("m-amount").innerText       = btn.dataset.amount;
+  document.getElementById("m-checkin").innerText      = btn.dataset.checkin;
+  document.getElementById("m-profile-link").href      = "/students/" + btn.dataset.id;
 });
 
-// Live resident search
 document.getElementById("residentSearch").addEventListener("input", function () {
   const q = this.value.toLowerCase();
   document.querySelectorAll("#residentsTable tbody tr").forEach(row => {
@@ -291,7 +305,6 @@ document.getElementById("residentSearch").addEventListener("input", function () 
   });
 });
 
-// Background availability refresh
 setInterval(() => { fetch("/api/availability").then(r => r.json()); }, 30000);
 </script>
 {% endblock %}

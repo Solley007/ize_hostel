@@ -36,6 +36,7 @@ class Room(db.Model):
     room_type = db.Column(db.String(30), nullable=False)
     capacity = db.Column(db.Integer, nullable=False)
     beds = db.relationship("Bed", backref="room", lazy=True, cascade="all, delete-orphan")
+    is_exclusive = db.Column(db.Boolean, default=False, nullable=False)
 
     @property
     def occupied_beds(self):
@@ -68,6 +69,7 @@ class Student(db.Model):
     amount_paid = db.Column(db.Float, default=0.0)
     check_in_date = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
+    parent_phone = db.Column(db.String(20), nullable=True)
 
 
 # ── Pricing ──────────────────────────────────────────────────────────────────
